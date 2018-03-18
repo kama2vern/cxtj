@@ -33,9 +33,8 @@ var commandConvert = cli.Command{
 			Value: &cli.StringSlice{},
 			Usage: "Input xlsx files or directory which includes some xlsx files. Multiple choices are allowed.",
 		},
-		cli.StringSliceFlag{
+		cli.StringFlag{
 			Name:  "to",
-			Value: &cli.StringSlice{},
 			Usage: "Output json file or directory. Directory choices required --multiple-output mode.",
 		},
 	},
@@ -43,14 +42,14 @@ var commandConvert = cli.Command{
 
 func doConvert(c *cli.Context) error {
 	from := c.StringSlice("from")
-	to := c.StringSlice("to")
+	to := c.String("to")
 
-	if len(from) < 1 || len(to) < 1 {
+	if len(from) < 1 || to == "" {
 		cli.ShowCommandHelpAndExit(c, "convert", 1)
 	}
 
 	fmt.Printf("verbose: %v\n", c.Bool("verbose"))
 	fmt.Printf("from: %s\n", strings.Join(from, ","))
-	fmt.Printf("to: %s\n", strings.Join(to, ","))
+	fmt.Printf("to: %s\n", to)
 	return nil
 }
