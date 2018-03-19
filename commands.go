@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/urfave/cli"
 )
 
@@ -43,13 +40,20 @@ var commandConvert = cli.Command{
 func doConvert(c *cli.Context) error {
 	from := c.StringSlice("from")
 	to := c.String("to")
+	isOnlyHeader := c.Bool("only-header")
+	isMultipleOutput := c.Bool("multiple-output")
 
 	if len(from) < 1 || to == "" {
 		cli.ShowCommandHelpAndExit(c, "convert", 1)
 	}
 
-	fmt.Printf("verbose: %v\n", c.Bool("verbose"))
-	fmt.Printf("from: %s\n", strings.Join(from, ","))
-	fmt.Printf("to: %s\n", to)
+	con := &converter{
+		InputFiles:       from,
+		OutputFile:       to,
+		IsOnlyHeader:     isOnlyHeader,
+		IsMultipleOutput: isMultipleOutput,
+	}
+	con.Convert()
+
 	return nil
 }
