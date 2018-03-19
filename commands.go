@@ -47,13 +47,8 @@ func doConvert(c *cli.Context) error {
 		cli.ShowCommandHelpAndExit(c, "convert", 1)
 	}
 
-	con := &converter{
-		InputFiles:       from,
-		OutputFile:       to,
-		IsOnlyHeader:     isOnlyHeader,
-		IsMultipleOutput: isMultipleOutput,
-	}
-	con.Convert()
+	con := &converter{}
+	con.Convert(from, to, isOnlyHeader, isMultipleOutput)
 
 	return nil
 }

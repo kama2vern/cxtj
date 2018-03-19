@@ -11,16 +11,13 @@ import (
 
 func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 	dir, _ := os.Getwd()
-	inputFile := path.Join(dir, "convert_test.xlsx")
+	inputFiles := []string{
+		path.Join(dir, "convert_test.xlsx"),
+	}
 	outputFile := path.Join(dir, "convert_test.json")
 
-	c := &converter{
-		InputFiles:       []string{inputFile},
-		OutputFile:       outputFile,
-		IsOnlyHeader:     false,
-		IsMultipleOutput: false,
-	}
-	c.Convert()
+	c := &converter{}
+	c.Convert(inputFiles, outputFile, false, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
 	if err != nil {
@@ -66,13 +63,8 @@ func TestConvertFromMultiXlsxIntoOneJson(t *testing.T) {
 	}
 	outputFile := path.Join(dir, "convert_test.json")
 
-	c := &converter{
-		InputFiles:       inputFiles,
-		OutputFile:       outputFile,
-		IsOnlyHeader:     false,
-		IsMultipleOutput: false,
-	}
-	c.Convert()
+	c := &converter{}
+	c.Convert(inputFiles, outputFile, false, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
 	if err != nil {
@@ -102,13 +94,8 @@ func TestConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	}
 	outputFile := path.Join(dir, "convert_test.json")
 
-	c := &converter{
-		InputFiles:       inputDir,
-		OutputFile:       outputFile,
-		IsOnlyHeader:     false,
-		IsMultipleOutput: false,
-	}
-	c.Convert()
+	c := &converter{}
+	c.Convert(inputDir, outputFile, false, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
 	if err != nil {

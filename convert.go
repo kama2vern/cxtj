@@ -11,12 +11,7 @@ import (
 	"./logger"
 )
 
-type converter struct {
-	InputFiles       []string
-	OutputFile       string
-	IsOnlyHeader     bool
-	IsMultipleOutput bool
-}
+type converter struct{}
 
 // XlsxMap is converted data structure from xlsx file
 /*
@@ -110,9 +105,9 @@ func (c *converter) convertXlsxFile(filename string) XlsxMap {
 	return c.xlsx2Map(xlsxFile)
 }
 
-func (c *converter) Convert() {
+func (c *converter) Convert(inputFiles []string, outputFile string, isOnlyHeader bool, isMultipleOutput bool) {
 	resultJSON := XlsxMap{}
-	for _, inputFile := range c.InputFiles {
+	for _, inputFile := range inputFiles {
 		fi, err := os.Stat(inputFile)
 		logger.DieIf(err)
 
@@ -131,6 +126,6 @@ func (c *converter) Convert() {
 	bytes, err := json.Marshal(resultJSON)
 	logger.DieIf(err)
 
-	err = ioutil.WriteFile(c.OutputFile, bytes, 0644)
+	err = ioutil.WriteFile(outputFile, bytes, 0644)
 	logger.DieIf(err)
 }
