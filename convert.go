@@ -56,13 +56,20 @@ type SheetDataList []map[string]string
 */
 type RowMap map[string]string
 
-func (c *converter) sheet2Map(sheet *xlsx.Sheet) SheetDataList {
+func (c *converter) sheet2Map(sheet *xlsx.Sheet, isOnlyHeader bool) SheetDataList {
 	headers := make([]string, len(sheet.Rows[0].Cells))
 	for i, c := range sheet.Rows[0].Cells {
 		headers[i] = c.Value
 	}
 
-	converts := make(SheetDataList, len(sheet.Rows[1:]))
+	if isOnlyHeader {
+		// TODO: it's to hard to specify the type of header data dynamically
+		logger.Log("sheet2Map", "work in progress")
+		return SheetDataList{}
+	}
+
+	size := 0
+	converts := make(SheetDataList, len(sheet.Rows[3:]))
 	for i, r := range sheet.Rows[3:] {
 		convertMap := RowMap{}
 
@@ -73,16 +80,24 @@ func (c *converter) sheet2Map(sheet *xlsx.Sheet) SheetDataList {
 				convertMap[headers[j]] = r.Cells[j].Value
 			}
 		}
-		converts[i] = convertMap
+
+		// ignore row which has all empty values
+		for _, v := range convertMap {
+			if len(v) > 0 {
+				converts[i] = convertMap
+				size++
+				break
+			}
+		}
 	}
 
-	return converts
+	return converts[:size]
 }
 
-func (c *converter) xlsx2Map(xFile *xlsx.File) XlsxMap {
+func (c *converter) xlsx2Map(xFile *xlsx.File, isOnlyHeader bool) XlsxMap {
 	resultJSON := XlsxMap{}
 	for _, s := range xFile.Sheets {
-		resultJSON[s.Name] = c.sheet2Map(s)
+		resultJSON[s.Name] = c.sheet2Map(s, isOnlyHeader)
 	}
 	return resultJSON
 }
@@ -98,11 +113,11 @@ func (c *converter) mergeXlsxMap(m1 XlsxMap, m2 XlsxMap) XlsxMap {
 	return ret
 }
 
-func (c *converter) convertXlsxFile(filename string) XlsxMap {
+func (c *converter) convertXlsxFile(filename string, isOnlyHeader bool) XlsxMap {
 	xlsxFile, err := xlsx.OpenFile(filename)
 	logger.DieIf(err)
 
-	return c.xlsx2Map(xlsxFile)
+	return c.xlsx2Map(xlsxFile, isOnlyHeader)
 }
 
 func (c *converter) Convert(inputFiles []string, outputFile string, isOnlyHeader bool, isMultipleOutput bool) {
@@ -114,12 +129,12 @@ func (c *converter) Convert(inputFiles []string, outputFile string, isOnlyHeader
 		if fi.IsDir() {
 			filepath.Walk(inputFile, func(path string, info os.FileInfo, err error) error {
 				if !info.IsDir() {
-					resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(path))
+					resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(path, isOnlyHeader))
 				}
 				return nil
 			})
 		} else {
-			resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(inputFile))
+			resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(inputFile, isOnlyHeader))
 		}
 	}
 

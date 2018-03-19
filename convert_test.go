@@ -53,6 +53,11 @@ func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 			t.Errorf("Mismatch contents. key %s, except %s, actual %s", k, except[k], v)
 		}
 	}
+
+	exceptMaxSize := 4
+	if len(contents) != exceptMaxSize {
+		t.Errorf("Invalid contents size (has empty row data?). except %d, actual %d", exceptMaxSize, len(contents))
+	}
 }
 
 func TestConvertFromMultiXlsxIntoOneJson(t *testing.T) {
