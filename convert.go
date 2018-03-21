@@ -56,6 +56,14 @@ type SheetDataList []map[string]string
 */
 type RowMap map[string]string
 
+// ColumnInfo is the maximum information about one of the column
+type ColumnInfo struct {
+	valueType string
+}
+
+// SheetColumns is information list of columns from one xlsxs
+type SheetColumns map[string]ColumnInfo
+
 func (c *converter) sheet2Map(sheet *xlsx.Sheet, isOnlyHeader bool) SheetDataList {
 	headers := make([]string, len(sheet.Rows[0].Cells))
 	for i, c := range sheet.Rows[0].Cells {
@@ -120,6 +128,37 @@ func (c *converter) convertXlsxFile(filename string, isOnlyHeader bool) XlsxMap 
 	return c.xlsx2Map(xlsxFile, isOnlyHeader)
 }
 
+func (c *converter) ConvertConcurrency(inputFiles []string, outputFile string, isOnlyHeader bool, isMultipleOutput bool) {
+	resultJSON := XlsxMap{}
+
+	il := []string{}
+	for _, inputFile := range inputFiles {
+		fi, err := os.Stat(inputFile)
+		logger.DieIf(err)
+
+		if fi.IsDir() {
+			filepath.Walk(inputFile, func(path string, info os.FileInfo, err error) error {
+				if !info.IsDir() && filepath.Ext(path) == ".xlsx" {
+					il = append(il, path)
+				}
+				return nil
+			})
+		} else {
+			il = append(il, inputFile)
+		}
+	}
+
+	resultJSON = DispatchConcurrencyWorkers(il, func(path string) XlsxMap {
+		return c.convertXlsxFile(path, isOnlyHeader)
+	})
+
+	bytes, err := json.Marshal(resultJSON)
+	logger.DieIf(err)
+
+	err = ioutil.WriteFile(outputFile, bytes, 0644)
+	logger.DieIf(err)
+}
+
 func (c *converter) Convert(inputFiles []string, outputFile string, isOnlyHeader bool, isMultipleOutput bool) {
 	resultJSON := XlsxMap{}
 	for _, inputFile := range inputFiles {
@@ -128,7 +167,7 @@ func (c *converter) Convert(inputFiles []string, outputFile string, isOnlyHeader
 
 		if fi.IsDir() {
 			filepath.Walk(inputFile, func(path string, info os.FileInfo, err error) error {
-				if !info.IsDir() {
+				if !info.IsDir() && filepath.Ext(path) == ".xlsx" {
 					resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(path, isOnlyHeader))
 				}
 				return nil

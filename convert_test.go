@@ -122,3 +122,34 @@ func TestConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 		}
 	}
 }
+
+func TestConcurrencyConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
+	dir, _ := os.Getwd()
+	inputDir := []string{
+		path.Join(dir, "test", "concurrency"),
+	}
+	outputFile := path.Join(dir, "convert_test.json")
+
+	c := &converter{}
+	c.ConvertConcurrency(inputDir, outputFile, false, false)
+
+	bytes, err := ioutil.ReadFile(outputFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := make(map[string][]map[string]string)
+	if err := json.Unmarshal(bytes, &result); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, sheetName := range []string{"sheet", "nextSheet"} {
+		if _, ok := result[sheetName]; !ok {
+			t.Errorf("outputed json should have a key of sheet name %s", sheetName)
+		}
+		contents, _ := result[sheetName]
+		if len(contents) == 0 {
+			t.Errorf("contents array is empty %s", sheetName)
+		}
+	}
+}
