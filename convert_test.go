@@ -14,7 +14,7 @@ func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 	inputFiles := []string{
 		path.Join(dir, "test", "excels", "convert_test.xlsx"),
 	}
-	outputFile := path.Join(dir, "convert_test.json")
+	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
 	c.Convert(inputFiles, outputFile, false, false)
@@ -66,7 +66,7 @@ func TestConvertFromMultiXlsxIntoOneJson(t *testing.T) {
 		path.Join(dir, "test", "excels", "convert_test.xlsx"),
 		path.Join(dir, "test", "excels", "convert_test2.xlsx"),
 	}
-	outputFile := path.Join(dir, "convert_test.json")
+	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
 	c.Convert(inputFiles, outputFile, false, false)
@@ -97,7 +97,7 @@ func TestConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	inputDir := []string{
 		path.Join(dir, "test", "excels"),
 	}
-	outputFile := path.Join(dir, "convert_test.json")
+	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
 	c.Convert(inputDir, outputFile, false, false)
@@ -128,7 +128,7 @@ func TestConcurrencyConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	inputDir := []string{
 		path.Join(dir, "test", "excels"),
 	}
-	outputFile := path.Join(dir, "convert_test.json")
+	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
 	c.ConvertConcurrency(inputDir, outputFile, false, false)
