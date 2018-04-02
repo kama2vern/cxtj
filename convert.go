@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -123,7 +124,10 @@ func (c *converter) mergeXlsxMap(m1 XlsxMap, m2 XlsxMap) XlsxMap {
 
 func (c *converter) convertXlsxFile(filename string, isOnlyHeader bool) XlsxMap {
 	xlsxFile, err := xlsx.OpenFile(filename)
-	logger.DieIf(err)
+	if logger.ErrorIf(err) {
+		logger.Log("convert.go", fmt.Sprintf("error file: %s", filename))
+		return XlsxMap{}
+	}
 
 	return c.xlsx2Map(xlsxFile, isOnlyHeader)
 }

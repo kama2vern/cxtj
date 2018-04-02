@@ -12,7 +12,7 @@ import (
 func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 	dir, _ := os.Getwd()
 	inputFiles := []string{
-		path.Join(dir, "convert_test.xlsx"),
+		path.Join(dir, "test", "excels", "convert_test.xlsx"),
 	}
 	outputFile := path.Join(dir, "convert_test.json")
 
@@ -63,8 +63,8 @@ func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 func TestConvertFromMultiXlsxIntoOneJson(t *testing.T) {
 	dir, _ := os.Getwd()
 	inputFiles := []string{
-		path.Join(dir, "convert_test.xlsx"),
-		path.Join(dir, "convert_test2.xlsx"),
+		path.Join(dir, "test", "excels", "convert_test.xlsx"),
+		path.Join(dir, "test", "excels", "convert_test2.xlsx"),
 	}
 	outputFile := path.Join(dir, "convert_test.json")
 
@@ -95,7 +95,7 @@ func TestConvertFromMultiXlsxIntoOneJson(t *testing.T) {
 func TestConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	dir, _ := os.Getwd()
 	inputDir := []string{
-		path.Join(dir, "test"),
+		path.Join(dir, "test", "excels"),
 	}
 	outputFile := path.Join(dir, "convert_test.json")
 
@@ -126,7 +126,7 @@ func TestConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 func TestConcurrencyConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	dir, _ := os.Getwd()
 	inputDir := []string{
-		path.Join(dir, "test", "concurrency"),
+		path.Join(dir, "test", "excels"),
 	}
 	outputFile := path.Join(dir, "convert_test.json")
 
