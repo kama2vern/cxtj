@@ -12,7 +12,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "cxtj"
 	app.Version = "0.0.1" // TODO: dynamic version & commit hash
-	app.Usage = "A CLI tool for convertion from xlsx to json"
+	app.Usage = "A CLI tool for conversion from xlsx to json"
 	app.Author = "kama2vern"
 	app.Commands = Commands
 	app.Flags = []cli.Flag{
