@@ -1,6 +1,8 @@
 package main
 
 import (
+	"./config"
+	"./logger"
 	"github.com/urfave/cli"
 )
 
@@ -38,6 +40,10 @@ var commandConvert = cli.Command{
 }
 
 func doConvert(c *cli.Context) error {
+	conffile := c.GlobalString("conf")
+	conf, err := config.LoadConfigFile(conffile)
+	logger.DieIf(err)
+
 	from := c.StringSlice("from")
 	to := c.String("to")
 	isOnlyHeader := c.Bool("only-header")
@@ -47,8 +53,14 @@ func doConvert(c *cli.Context) error {
 		cli.ShowCommandHelpAndExit(c, "convert", 1)
 	}
 
-	con := &converter{}
-	con.Convert(from, to, isOnlyHeader, isMultipleOutput)
+	con := &converter{
+		config: conf,
+	}
+	if isOnlyHeader {
+		con.ConvertIntoHeader(from, to, isMultipleOutput)
+	} else {
+		con.Convert(from, to, isMultipleOutput)
+	}
 
 	return nil
 }

@@ -17,7 +17,7 @@ func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
-	c.Convert(inputFiles, outputFile, false, false)
+	c.Convert(inputFiles, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
 	if err != nil {
@@ -69,7 +69,7 @@ func TestConvertFromMultiXlsxIntoOneJson(t *testing.T) {
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
-	c.Convert(inputFiles, outputFile, false, false)
+	c.Convert(inputFiles, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
 	if err != nil {
@@ -100,7 +100,7 @@ func TestConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
-	c.Convert(inputDir, outputFile, false, false)
+	c.Convert(inputDir, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
 	if err != nil {
@@ -131,7 +131,7 @@ func TestConcurrencyConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
 	c := &converter{}
-	c.ConvertConcurrency(inputDir, outputFile, false, false)
+	c.ConvertConcurrency(inputDir, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
 	if err != nil {
@@ -150,6 +150,77 @@ func TestConcurrencyConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 		contents, _ := result[sheetName]
 		if len(contents) == 0 {
 			t.Errorf("contents array is empty %s", sheetName)
+		}
+	}
+}
+
+func TestConvertFromOneXlsxIntoOneJsonOnlyHeader(t *testing.T) {
+	dir, _ := os.Getwd()
+	inputFiles := []string{
+		path.Join(dir, "test", "excels", "convert_test.xlsx"),
+	}
+	outputFile := path.Join(dir, "test", "output", "convert_test.json")
+
+	c := &converter{}
+	c.ConvertIntoHeader(inputFiles, outputFile, false)
+
+	bytes, err := ioutil.ReadFile(outputFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := make(XlsxHeaderMap)
+	if err := json.Unmarshal(bytes, &result); err != nil {
+		log.Fatal(err)
+	}
+
+	if _, ok := result["sheet"]; !ok {
+		t.Errorf("outputed json should have a key of sheet name")
+	}
+
+	headerInfo := result["sheet"]
+
+	except := map[string]ColumnInfo{
+		"id": ColumnInfo{
+			Index:     0,
+			ValueType: "int",
+		},
+		"characterId": ColumnInfo{
+			Index:     1,
+			ValueType: "int",
+		},
+		"name": ColumnInfo{
+			Index:     2,
+			ValueType: "string",
+		},
+		"hp": ColumnInfo{
+			Index:     3,
+			ValueType: "long",
+		},
+		"mp": ColumnInfo{
+			Index:     4,
+			ValueType: "long",
+		},
+		"attack": ColumnInfo{
+			Index:     5,
+			ValueType: "int",
+		},
+		"defense": ColumnInfo{
+			Index:     6,
+			ValueType: "int",
+		},
+	}
+
+	for k1, v1 := range except {
+		if _, ok := headerInfo[k1]; !ok {
+			t.Errorf("column not found: %s", k1)
+		}
+
+		if v1.Index != headerInfo[k1].Index {
+			t.Errorf("invalid column info. column name: %s, attribute: Index, expect: %d, actual: %d", k1, v1.Index, headerInfo[k1].Index)
+		}
+		if v1.ValueType != headerInfo[k1].ValueType {
+			t.Errorf("invalid column info. column name: %s, attribute: ValueType, expect: %s, actual: %s", k1, v1.ValueType, headerInfo[k1].ValueType)
 		}
 	}
 }

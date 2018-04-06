@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 
 func TestLoadExcelFormatFromConfig(t *testing.T) {
 	dir, _ := os.Getwd()
-	conffle := path.Join(dir, "test/cxtj.conf")
+	conffle := path.Join(dir, "..", "test", "cxtj.conf")
 
 	excelFormats := LoadExcelFormatsFromConfig(conffle)
 

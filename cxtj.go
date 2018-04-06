@@ -18,7 +18,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "conf",
-			Value: "./config",
+			Value: "",
 			Usage: "Config file path",
 		},
 	}

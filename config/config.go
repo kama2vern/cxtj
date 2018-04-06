@@ -1,12 +1,14 @@
-package main
+package config
 
 import (
 	"fmt"
 
-	"./logger"
+	"../logger"
 
 	"github.com/BurntSushi/toml"
 )
+
+var DefaultConfig *Config
 
 // Config represents cxtj's configuration file.
 type Config struct {
@@ -66,20 +68,41 @@ func (c *ExcelFormatRowType) UnmarshalText(text []byte) error {
 	}
 }
 
+func init() {
+	DefaultConfig = &Config{
+		ExcelFormats: []ExcelFormat{
+			ExcelFormat{
+				RowType: ExcelFormatRowTypeKey,
+			},
+			ExcelFormat{
+				RowType: ExcelFormatRowTypeValueType,
+			},
+			ExcelFormat{
+				RowType: ExcelFormatRowTypeComment,
+			},
+		},
+	}
+}
+
 // LoadExcelFormatsFromConfig gets array of excel formats from config file
 func LoadExcelFormatsFromConfig(conffile string) []ExcelFormat {
-	conf, err := loadConfigFile(conffile)
+	conf, err := LoadConfigFile(conffile)
 	if err != nil {
 		return []ExcelFormat{}
 	}
 	return conf.ExcelFormats
 }
 
-func loadConfigFile(file string) (*Config, error) {
+// LoadConfigFile gets Config
+func LoadConfigFile(file string) (*Config, error) {
+	if len(file) == 0 {
+		return DefaultConfig, nil
+	}
+
 	config := &Config{}
 	if _, err := toml.DecodeFile(file, config); err != nil {
 		logger.ErrorIf(err)
-		return config, err
+		return nil, err
 	}
 
 	return config, nil

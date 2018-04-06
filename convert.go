@@ -9,10 +9,13 @@ import (
 
 	"github.com/tealeg/xlsx"
 
+	"./config"
 	"./logger"
 )
 
-type converter struct{}
+type converter struct {
+	config *config.Config
+}
 
 // XlsxMap is converted data structure from xlsx file
 /*
@@ -59,29 +62,53 @@ type RowMap map[string]string
 
 // ColumnInfo is the maximum information about one of the column
 type ColumnInfo struct {
-	valueType string
+	Index     int    `json:"index"`
+	ValueType string `json:"valueType"`
 }
 
-// SheetColumns is information list of columns from one xlsxs
+/*
+	sheet: {
+		column1: {
+			Index: 0,
+			ValueType: "int",
+		},
+		column2: {
+			Index: 1,
+			ValueType: "string",
+		},
+		column3: {
+			Index: 2,
+			ValueType: "float",
+		},
+	}
+*/
+// SheetColumns is information list of columns
 type SheetColumns map[string]ColumnInfo
 
-func (c *converter) sheet2Map(sheet *xlsx.Sheet, isOnlyHeader bool) SheetDataList {
+// XlsxHeaderMap is information list of columns from one xlsx
+type XlsxHeaderMap map[string]map[string]ColumnInfo
+
+func (c *converter) sheet2Map(sheet *xlsx.Sheet) SheetDataList {
 	headers := make([]string, len(sheet.Rows[0].Cells))
 	for i, c := range sheet.Rows[0].Cells {
 		headers[i] = c.Value
 	}
 
-	if isOnlyHeader {
-		// TODO: it's to hard to specify the type of header data dynamically
-		logger.Log("sheet2Map", "work in progress")
-		return SheetDataList{}
+	var excelFormats []config.ExcelFormat
+	if c.config == nil {
+		excelFormats = config.DefaultConfig.ExcelFormats
+	} else {
+		excelFormats = c.config.ExcelFormats
 	}
 
 	size := 0
-	converts := make(SheetDataList, len(sheet.Rows[3:]))
-	for i, r := range sheet.Rows[3:] {
-		convertMap := RowMap{}
+	converts := make(SheetDataList, len(sheet.Rows[len(excelFormats):]))
+	for i, r := range sheet.Rows {
+		if i < len(excelFormats) && excelFormats[i].RowType != config.ExcelFormatRowTypeData {
+			continue
+		}
 
+		convertMap := RowMap{}
 		for j := 0; j < len(headers); j++ {
 			if j >= len(r.Cells) {
 				convertMap[headers[j]] = ""
@@ -93,7 +120,7 @@ func (c *converter) sheet2Map(sheet *xlsx.Sheet, isOnlyHeader bool) SheetDataLis
 		// ignore row which has all empty values
 		for _, v := range convertMap {
 			if len(v) > 0 {
-				converts[i] = convertMap
+				converts[size] = convertMap
 				size++
 				break
 			}
@@ -103,12 +130,42 @@ func (c *converter) sheet2Map(sheet *xlsx.Sheet, isOnlyHeader bool) SheetDataLis
 	return converts[:size]
 }
 
-func (c *converter) xlsx2Map(xFile *xlsx.File, isOnlyHeader bool) XlsxMap {
+func (c *converter) xlsx2Map(xFile *xlsx.File) XlsxMap {
 	resultJSON := XlsxMap{}
 	for _, s := range xFile.Sheets {
-		resultJSON[s.Name] = c.sheet2Map(s, isOnlyHeader)
+		resultJSON[s.Name] = c.sheet2Map(s)
 	}
 	return resultJSON
+}
+
+func (c *converter) sheet2HeaderMap(sheet *xlsx.Sheet) SheetColumns {
+	// TODO: Rowsのindexはconfigで動的に変える
+	headers := make(map[string]ColumnInfo, len(sheet.Rows[0].Cells))
+	for i, c := range sheet.Rows[0].Cells {
+		headers[c.Value] = ColumnInfo{
+			Index:     i,
+			ValueType: sheet.Rows[1].Cells[i].Value,
+		}
+	}
+	return headers
+}
+
+func (c *converter) xlsx2HeaderMap(xFile *xlsx.File) XlsxHeaderMap {
+	ret := XlsxHeaderMap{}
+	for _, s := range xFile.Sheets {
+		ret[s.Name] = c.sheet2HeaderMap(s)
+	}
+	return ret
+}
+
+func (c *converter) convertXlsxFileIntoHeader(filename string) XlsxHeaderMap {
+	xlsxFile, err := xlsx.OpenFile(filename)
+	if logger.ErrorIf(err) {
+		logger.Log("convert.go", fmt.Sprintf("error file: %s", filename))
+		return XlsxHeaderMap{}
+	}
+
+	return c.xlsx2HeaderMap(xlsxFile)
 }
 
 func (c *converter) mergeXlsxMap(m1 XlsxMap, m2 XlsxMap) XlsxMap {
@@ -122,38 +179,54 @@ func (c *converter) mergeXlsxMap(m1 XlsxMap, m2 XlsxMap) XlsxMap {
 	return ret
 }
 
-func (c *converter) convertXlsxFile(filename string, isOnlyHeader bool) XlsxMap {
+func (c *converter) mergeXlsxHeaderMap(m1 XlsxHeaderMap, m2 XlsxHeaderMap) XlsxHeaderMap {
+	ret := XlsxHeaderMap{}
+	for k, v := range m1 {
+		ret[k] = v
+	}
+	for k, v := range m2 {
+		ret[k] = v
+	}
+	return ret
+}
+
+func (c *converter) convertXlsxFile(filename string) XlsxMap {
 	xlsxFile, err := xlsx.OpenFile(filename)
 	if logger.ErrorIf(err) {
 		logger.Log("convert.go", fmt.Sprintf("error file: %s", filename))
 		return XlsxMap{}
 	}
 
-	return c.xlsx2Map(xlsxFile, isOnlyHeader)
+	return c.xlsx2Map(xlsxFile)
 }
 
-func (c *converter) ConvertConcurrency(inputFiles []string, outputFile string, isOnlyHeader bool, isMultipleOutput bool) {
-	resultJSON := XlsxMap{}
-
-	il := []string{}
-	for _, inputFile := range inputFiles {
-		fi, err := os.Stat(inputFile)
+func (c *converter) traversalInputFiles(inputDirsOrFiles []string) []string {
+	ret := []string{}
+	for _, inputDirOrFile := range inputDirsOrFiles {
+		fi, err := os.Stat(inputDirOrFile)
 		logger.DieIf(err)
 
 		if fi.IsDir() {
-			filepath.Walk(inputFile, func(path string, info os.FileInfo, err error) error {
+			filepath.Walk(inputDirOrFile, func(path string, info os.FileInfo, err error) error {
 				if !info.IsDir() && filepath.Ext(path) == ".xlsx" {
-					il = append(il, path)
+					ret = append(ret, path)
 				}
 				return nil
 			})
 		} else {
-			il = append(il, inputFile)
+			ret = append(ret, inputDirOrFile)
 		}
 	}
+	return ret
+}
+
+func (c *converter) ConvertConcurrency(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
+	resultJSON := XlsxMap{}
+
+	il := c.traversalInputFiles(inputDirsOrFiles)
 
 	resultJSON = DispatchConcurrencyWorkers(il, func(path string) XlsxMap {
-		return c.convertXlsxFile(path, isOnlyHeader)
+		return c.convertXlsxFile(path)
 	})
 
 	bytes, err := json.Marshal(resultJSON)
@@ -163,22 +236,25 @@ func (c *converter) ConvertConcurrency(inputFiles []string, outputFile string, i
 	logger.DieIf(err)
 }
 
-func (c *converter) Convert(inputFiles []string, outputFile string, isOnlyHeader bool, isMultipleOutput bool) {
+func (c *converter) Convert(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
 	resultJSON := XlsxMap{}
-	for _, inputFile := range inputFiles {
-		fi, err := os.Stat(inputFile)
-		logger.DieIf(err)
 
-		if fi.IsDir() {
-			filepath.Walk(inputFile, func(path string, info os.FileInfo, err error) error {
-				if !info.IsDir() && filepath.Ext(path) == ".xlsx" {
-					resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(path, isOnlyHeader))
-				}
-				return nil
-			})
-		} else {
-			resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(inputFile, isOnlyHeader))
-		}
+	for _, inputFile := range c.traversalInputFiles(inputDirsOrFiles) {
+		resultJSON = c.mergeXlsxMap(resultJSON, c.convertXlsxFile(inputFile))
+	}
+
+	bytes, err := json.Marshal(resultJSON)
+	logger.DieIf(err)
+
+	err = ioutil.WriteFile(outputFile, bytes, 0644)
+	logger.DieIf(err)
+}
+
+func (c *converter) ConvertIntoHeader(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
+	resultJSON := XlsxHeaderMap{}
+
+	for _, inputFile := range c.traversalInputFiles(inputDirsOrFiles) {
+		resultJSON = c.mergeXlsxHeaderMap(resultJSON, c.convertXlsxFileIntoHeader(inputFile))
 	}
 
 	bytes, err := json.Marshal(resultJSON)
