@@ -16,7 +16,7 @@ func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 	}
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
-	c := &converter{}
+	c := NewConverter(nil)
 	c.Convert(inputFiles, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
@@ -68,7 +68,7 @@ func TestConvertFromMultiXlsxIntoOneJson(t *testing.T) {
 	}
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
-	c := &converter{}
+	c := NewConverter(nil)
 	c.Convert(inputFiles, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
@@ -99,7 +99,7 @@ func TestConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	}
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
-	c := &converter{}
+	c := NewConverter(nil)
 	c.Convert(inputDir, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
@@ -130,7 +130,7 @@ func TestConcurrencyConvertFromOneXlsxDirIntoOneJson(t *testing.T) {
 	}
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
-	c := &converter{}
+	c := NewConverter(nil)
 	c.ConvertConcurrency(inputDir, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)
@@ -161,7 +161,7 @@ func TestConvertFromOneXlsxIntoOneJsonOnlyHeader(t *testing.T) {
 	}
 	outputFile := path.Join(dir, "test", "output", "convert_test.json")
 
-	c := &converter{}
+	c := NewConverter(nil)
 	c.ConvertIntoHeader(inputFiles, outputFile, false)
 
 	bytes, err := ioutil.ReadFile(outputFile)

@@ -13,7 +13,7 @@ import (
 	"./logger"
 )
 
-type converter struct {
+type Converter struct {
 	config *config.Config
 }
 
@@ -88,18 +88,13 @@ type SheetColumns map[string]ColumnInfo
 // XlsxHeaderMap is information list of columns from one xlsx
 type XlsxHeaderMap map[string]map[string]ColumnInfo
 
-func (c *converter) sheet2Map(sheet *xlsx.Sheet) SheetDataList {
+func (c *Converter) sheet2Map(sheet *xlsx.Sheet) SheetDataList {
 	headers := make([]string, len(sheet.Rows[0].Cells))
 	for i, c := range sheet.Rows[0].Cells {
 		headers[i] = c.Value
 	}
 
-	var excelFormats []config.ExcelFormat
-	if c.config == nil {
-		excelFormats = config.DefaultConfig.ExcelFormats
-	} else {
-		excelFormats = c.config.ExcelFormats
-	}
+	excelFormats := c.config.ExcelFormats
 
 	size := 0
 	converts := make(SheetDataList, len(sheet.Rows[len(excelFormats):]))
@@ -130,7 +125,7 @@ func (c *converter) sheet2Map(sheet *xlsx.Sheet) SheetDataList {
 	return converts[:size]
 }
 
-func (c *converter) xlsx2Map(xFile *xlsx.File) XlsxMap {
+func (c *Converter) xlsx2Map(xFile *xlsx.File) XlsxMap {
 	resultJSON := XlsxMap{}
 	for _, s := range xFile.Sheets {
 		resultJSON[s.Name] = c.sheet2Map(s)
@@ -138,19 +133,24 @@ func (c *converter) xlsx2Map(xFile *xlsx.File) XlsxMap {
 	return resultJSON
 }
 
-func (c *converter) sheet2HeaderMap(sheet *xlsx.Sheet) SheetColumns {
-	// TODO: Rowsのindexはconfigで動的に変える
-	headers := make(map[string]ColumnInfo, len(sheet.Rows[0].Cells))
-	for i, c := range sheet.Rows[0].Cells {
+func (c *Converter) sheet2HeaderMap(sheet *xlsx.Sheet) SheetColumns {
+	keyExcelFormat, err := c.config.GetExcelFormatByRowType(config.ExcelFormatRowTypeKey)
+	logger.DieIf(err)
+
+	valueTypeExcelFormat, err := c.config.GetExcelFormatByRowType(config.ExcelFormatRowTypeValueType)
+	logger.DieIf(err)
+
+	headers := make(map[string]ColumnInfo, len(sheet.Rows[keyExcelFormat.RowLine-1].Cells))
+	for i, c := range sheet.Rows[keyExcelFormat.RowLine-1].Cells {
 		headers[c.Value] = ColumnInfo{
 			Index:     i,
-			ValueType: sheet.Rows[1].Cells[i].Value,
+			ValueType: sheet.Rows[valueTypeExcelFormat.RowLine-1].Cells[i].Value,
 		}
 	}
 	return headers
 }
 
-func (c *converter) xlsx2HeaderMap(xFile *xlsx.File) XlsxHeaderMap {
+func (c *Converter) xlsx2HeaderMap(xFile *xlsx.File) XlsxHeaderMap {
 	ret := XlsxHeaderMap{}
 	for _, s := range xFile.Sheets {
 		ret[s.Name] = c.sheet2HeaderMap(s)
@@ -158,7 +158,7 @@ func (c *converter) xlsx2HeaderMap(xFile *xlsx.File) XlsxHeaderMap {
 	return ret
 }
 
-func (c *converter) convertXlsxFileIntoHeader(filename string) XlsxHeaderMap {
+func (c *Converter) convertXlsxFileIntoHeader(filename string) XlsxHeaderMap {
 	xlsxFile, err := xlsx.OpenFile(filename)
 	if logger.ErrorIf(err) {
 		logger.Log("convert.go", fmt.Sprintf("error file: %s", filename))
@@ -168,7 +168,7 @@ func (c *converter) convertXlsxFileIntoHeader(filename string) XlsxHeaderMap {
 	return c.xlsx2HeaderMap(xlsxFile)
 }
 
-func (c *converter) mergeXlsxMap(m1 XlsxMap, m2 XlsxMap) XlsxMap {
+func (c *Converter) mergeXlsxMap(m1 XlsxMap, m2 XlsxMap) XlsxMap {
 	ret := XlsxMap{}
 	for k, v := range m1 {
 		ret[k] = v
@@ -179,7 +179,7 @@ func (c *converter) mergeXlsxMap(m1 XlsxMap, m2 XlsxMap) XlsxMap {
 	return ret
 }
 
-func (c *converter) mergeXlsxHeaderMap(m1 XlsxHeaderMap, m2 XlsxHeaderMap) XlsxHeaderMap {
+func (c *Converter) mergeXlsxHeaderMap(m1 XlsxHeaderMap, m2 XlsxHeaderMap) XlsxHeaderMap {
 	ret := XlsxHeaderMap{}
 	for k, v := range m1 {
 		ret[k] = v
@@ -190,7 +190,7 @@ func (c *converter) mergeXlsxHeaderMap(m1 XlsxHeaderMap, m2 XlsxHeaderMap) XlsxH
 	return ret
 }
 
-func (c *converter) convertXlsxFile(filename string) XlsxMap {
+func (c *Converter) convertXlsxFile(filename string) XlsxMap {
 	xlsxFile, err := xlsx.OpenFile(filename)
 	if logger.ErrorIf(err) {
 		logger.Log("convert.go", fmt.Sprintf("error file: %s", filename))
@@ -200,7 +200,7 @@ func (c *converter) convertXlsxFile(filename string) XlsxMap {
 	return c.xlsx2Map(xlsxFile)
 }
 
-func (c *converter) traversalInputFiles(inputDirsOrFiles []string) []string {
+func (c *Converter) traversalInputFiles(inputDirsOrFiles []string) []string {
 	ret := []string{}
 	for _, inputDirOrFile := range inputDirsOrFiles {
 		fi, err := os.Stat(inputDirOrFile)
@@ -220,7 +220,7 @@ func (c *converter) traversalInputFiles(inputDirsOrFiles []string) []string {
 	return ret
 }
 
-func (c *converter) ConvertConcurrency(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
+func (c *Converter) ConvertConcurrency(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
 	resultJSON := XlsxMap{}
 
 	il := c.traversalInputFiles(inputDirsOrFiles)
@@ -236,7 +236,7 @@ func (c *converter) ConvertConcurrency(inputDirsOrFiles []string, outputFile str
 	logger.DieIf(err)
 }
 
-func (c *converter) Convert(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
+func (c *Converter) Convert(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
 	resultJSON := XlsxMap{}
 
 	for _, inputFile := range c.traversalInputFiles(inputDirsOrFiles) {
@@ -250,7 +250,7 @@ func (c *converter) Convert(inputDirsOrFiles []string, outputFile string, isMult
 	logger.DieIf(err)
 }
 
-func (c *converter) ConvertIntoHeader(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
+func (c *Converter) ConvertIntoHeader(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
 	resultJSON := XlsxHeaderMap{}
 
 	for _, inputFile := range c.traversalInputFiles(inputDirsOrFiles) {
@@ -262,4 +262,19 @@ func (c *converter) ConvertIntoHeader(inputDirsOrFiles []string, outputFile stri
 
 	err = ioutil.WriteFile(outputFile, bytes, 0644)
 	logger.DieIf(err)
+}
+
+// NewConverter
+func NewConverter(conf *config.Config) *Converter {
+	var c *config.Config
+	if conf == nil {
+		c = config.DefaultConfig
+	} else {
+		c = conf
+	}
+
+	ret := &Converter{
+		config: c,
+	}
+	return ret
 }

@@ -53,13 +53,11 @@ func doConvert(c *cli.Context) error {
 		cli.ShowCommandHelpAndExit(c, "convert", 1)
 	}
 
-	con := &converter{
-		config: conf,
-	}
+	converter := NewConverter(conf)
 	if isOnlyHeader {
-		con.ConvertIntoHeader(from, to, isMultipleOutput)
+		converter.ConvertIntoHeader(from, to, isMultipleOutput)
 	} else {
-		con.Convert(from, to, isMultipleOutput)
+		converter.Convert(from, to, isMultipleOutput)
 	}
 
 	return nil

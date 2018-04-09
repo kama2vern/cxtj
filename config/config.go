@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// DefaultConfig provides default configuration
 var DefaultConfig *Config
 
 // Config represents cxtj's configuration file.
@@ -74,12 +75,15 @@ func init() {
 		ExcelFormats: []ExcelFormat{
 			ExcelFormat{
 				RowType: ExcelFormatRowTypeKey,
+				RowLine: 1,
 			},
 			ExcelFormat{
 				RowType: ExcelFormatRowTypeValueType,
+				RowLine: 2,
 			},
 			ExcelFormat{
 				RowType: ExcelFormatRowTypeComment,
+				RowLine: 3,
 			},
 		},
 	}
