@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"sort"
 
 	"../logger"
 
@@ -122,6 +123,23 @@ func (c *Config) GetExcelFormatByRowType(rowType ExcelFormatRowType) (ExcelForma
 	return ExcelFormat{}, fmt.Errorf("not found excel format. row_type: %s", rowType.String())
 }
 
+func verifyConfig(config *Config) error {
+	var rowLines []int
+	for _, excelFormat := range config.ExcelFormats {
+		rowLines = append(rowLines, excelFormat.RowLine)
+	}
+	sort.Ints(rowLines)
+	for index := range rowLines {
+		if index+1 >= len(rowLines) {
+			break
+		}
+		if rowLines[index+1]-rowLines[index] != 1 {
+			return fmt.Errorf("Invalid Excel Format configuration\nRow Lines of excel formats should be in serial numbers")
+		}
+	}
+	return nil
+}
+
 // LoadConfigFile gets Config
 func LoadConfigFile(file string) (*Config, error) {
 	if len(file) == 0 {
@@ -131,6 +149,11 @@ func LoadConfigFile(file string) (*Config, error) {
 	config := &Config{}
 	if _, err := toml.DecodeFile(file, config); err != nil {
 		logger.ErrorIf(err)
+		return nil, err
+	}
+
+	// validation
+	if err := verifyConfig(config); err != nil {
 		return nil, err
 	}
 

@@ -52,5 +52,15 @@ func TestLoadExcelFormatFromConfig(t *testing.T) {
 	}
 }
 
+func TestValidationOfConfig(t *testing.T) {
+	dir, _ := os.Getwd()
+	conffle := path.Join(dir, "..", "test", "invalid.conf")
+
+	_, err := LoadConfigFile(conffle)
+	if err == nil {
+		t.Error("Validation of configurations about excel format does not work")
+	}
+}
+
 func TestLoadJsonFormatFromConfig(t *testing.T) {
 }
