@@ -107,9 +107,12 @@ func (c *Converter) sheet2Map(sheet *xlsx.Sheet) SheetDataList {
 		for j := 0; j < len(headers); j++ {
 			if j >= len(r.Cells) {
 				convertMap[headers[j]] = ""
-			} else {
-				convertMap[headers[j]] = r.Cells[j].Value
+				continue
 			}
+
+			var err error
+			convertMap[headers[j]], err = r.Cells[j].String()
+			logger.DieIf(err)
 		}
 
 		// ignore row which has all empty values

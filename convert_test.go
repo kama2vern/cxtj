@@ -39,13 +39,13 @@ func TestConvertFromOneXlsxIntoOneJson(t *testing.T) {
 	}
 
 	except := map[string]string{
-		"id":          "1.0",
-		"characterId": "1001.0",
+		"id":          "1",
+		"characterId": "1001",
 		"name":        "アルファ",
-		"hp":          "100.0",
-		"mp":          "50.0",
-		"attack":      "1.0",
-		"defense":     "1.0",
+		"hp":          "100",
+		"mp":          "50",
+		"attack":      "1",
+		"defense":     "1",
 	}
 
 	for k, v := range contents[0] {
