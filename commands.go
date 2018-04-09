@@ -23,6 +23,7 @@ var commandConvert = cli.Command{
 	Flags: []cli.Flag{
 		cli.BoolFlag{Name: "verbose, v", Usage: "Verbose output mode"},
 		cli.BoolFlag{Name: "only-header", Usage: "Only header output mode"},
+		cli.BoolFlag{Name: "concurrent", Usage: "Conversion in concurrency"},
 		cli.BoolFlag{
 			Name:  "multiple-output",
 			Usage: "Output multiple json files each xlsx sheets",
@@ -48,13 +49,19 @@ func doConvert(c *cli.Context) error {
 	to := c.String("to")
 	isOnlyHeader := c.Bool("only-header")
 	isMultipleOutput := c.Bool("multiple-output")
+	isConcurrent := c.Bool("concurrent")
 
 	if len(from) < 1 || to == "" {
 		cli.ShowCommandHelpAndExit(c, "convert", 1)
 	}
+	if isOnlyHeader && isConcurrent {
+		return cli.NewExitError("Concurrency conversion into header does not support", 1)
+	}
 
 	converter := NewConverter(conf)
-	if isOnlyHeader {
+	if isConcurrent {
+		converter.ConvertConcurrency(from, to, isMultipleOutput)
+	} else if isOnlyHeader {
 		converter.ConvertIntoHeader(from, to, isMultipleOutput)
 	} else {
 		converter.Convert(from, to, isMultipleOutput)
