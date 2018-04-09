@@ -14,6 +14,7 @@ var DefaultConfig *Config
 // Config represents cxtj's configuration file.
 type Config struct {
 	ExcelFormats []ExcelFormat `toml:"excel"`
+	ExcelExts    []string      `toml:"excel_extension"`
 
 	// TODO: output json config
 }
@@ -72,6 +73,9 @@ func (c *ExcelFormatRowType) UnmarshalText(text []byte) error {
 
 func init() {
 	DefaultConfig = &Config{
+		ExcelExts: []string{
+			".xlsx",
+		},
 		ExcelFormats: []ExcelFormat{
 			ExcelFormat{
 				RowType: ExcelFormatRowTypeKey,

@@ -208,16 +208,29 @@ func (c *Converter) traversalInputFiles(inputDirsOrFiles []string) []string {
 
 		if fi.IsDir() {
 			filepath.Walk(inputDirOrFile, func(path string, info os.FileInfo, err error) error {
-				if !info.IsDir() && filepath.Ext(path) == ".xlsx" {
+				if !info.IsDir() && c.isExcelFile(path) {
 					ret = append(ret, path)
 				}
 				return nil
 			})
-		} else {
+			continue
+		}
+
+		if c.isExcelFile(inputDirOrFile) {
 			ret = append(ret, inputDirOrFile)
 		}
 	}
 	return ret
+}
+
+func (c *Converter) isExcelFile(filename string) bool {
+	targetExt := filepath.Ext(filename)
+	for _, ext := range c.config.ExcelExts {
+		if targetExt == ext {
+			return true
+		}
+	}
+	return false
 }
 
 // ConvertConcurrency executes as the same logic as Convert in concurrently

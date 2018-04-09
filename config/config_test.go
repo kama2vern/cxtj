@@ -15,6 +15,15 @@ func TestLoadExcelFormatFromConfig(t *testing.T) {
 		panic(err)
 	}
 
+	excelExts := conf.ExcelExts
+	if len(excelExts) <= 0 {
+		t.Errorf("Excel Extension is not found")
+	}
+	if len(excelExts) > 0 &&
+		excelExts[0] != ".xlsx" {
+		t.Errorf("Invalid excel ext. expect: .xlsx actual: %s", excelExts[0])
+	}
+
 	lineOneFormat, _ := conf.GetExcelFormatByLine(1)
 	if lineOneFormat.RowType != ExcelFormatRowTypeKey {
 		t.Errorf("Format of line:1 should be key")
