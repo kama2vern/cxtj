@@ -20,6 +20,7 @@ type Config struct {
 // ExcelFormat represents an input excel format
 type ExcelFormat struct {
 	RowType ExcelFormatRowType `toml:"row_type"`
+	RowLine int                `toml:"row_line"`
 }
 
 // ExcelFormatRowType is an enum to represent a type of excel row.
@@ -91,6 +92,16 @@ func LoadExcelFormatsFromConfig(conffile string) []ExcelFormat {
 		return []ExcelFormat{}
 	}
 	return conf.ExcelFormats
+}
+
+// GetExcelFormatByLine finds specific excel format by row line
+func (c *Config) GetExcelFormatByLine(line int) (ExcelFormat, error) {
+	for _, excelFormat := range c.ExcelFormats {
+		if excelFormat.RowLine == line {
+			return excelFormat, nil
+		}
+	}
+	return ExcelFormat{}, fmt.Errorf("not found excel format. line: %d", line)
 }
 
 // LoadConfigFile gets Config
