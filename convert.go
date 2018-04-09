@@ -193,7 +193,7 @@ func (c *Converter) mergeXlsxHeaderMap(m1 XlsxHeaderMap, m2 XlsxHeaderMap) XlsxH
 func (c *Converter) convertXlsxFile(filename string) XlsxMap {
 	xlsxFile, err := xlsx.OpenFile(filename)
 	if logger.ErrorIf(err) {
-		logger.Log("convert.go", fmt.Sprintf("error file: %s", filename))
+		logger.Log("convert.go", fmt.Sprintf("ignored error file: %s", filename))
 		return XlsxMap{}
 	}
 
