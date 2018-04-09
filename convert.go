@@ -220,6 +220,7 @@ func (c *Converter) traversalInputFiles(inputDirsOrFiles []string) []string {
 	return ret
 }
 
+// ConvertConcurrency executes as the same logic as Convert in concurrently
 func (c *Converter) ConvertConcurrency(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
 	resultJSON := XlsxMap{}
 
@@ -236,6 +237,7 @@ func (c *Converter) ConvertConcurrency(inputDirsOrFiles []string, outputFile str
 	logger.DieIf(err)
 }
 
+// Convert executes convertion from xlsx files or directories into json file(s)
 func (c *Converter) Convert(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
 	resultJSON := XlsxMap{}
 
@@ -250,6 +252,7 @@ func (c *Converter) Convert(inputDirsOrFiles []string, outputFile string, isMult
 	logger.DieIf(err)
 }
 
+// ConvertIntoHeader executes convertion from xlsx files or directories into header only json file(s)
 func (c *Converter) ConvertIntoHeader(inputDirsOrFiles []string, outputFile string, isMultipleOutput bool) {
 	resultJSON := XlsxHeaderMap{}
 
@@ -264,7 +267,7 @@ func (c *Converter) ConvertIntoHeader(inputDirsOrFiles []string, outputFile stri
 	logger.DieIf(err)
 }
 
-// NewConverter
+// NewConverter creates new Converter instance
 func NewConverter(conf *config.Config) *Converter {
 	var c *config.Config
 	if conf == nil {
