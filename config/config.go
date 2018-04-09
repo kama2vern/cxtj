@@ -101,7 +101,17 @@ func (c *Config) GetExcelFormatByLine(line int) (ExcelFormat, error) {
 			return excelFormat, nil
 		}
 	}
-	return ExcelFormat{}, fmt.Errorf("not found excel format. line: %d", line)
+	return ExcelFormat{}, fmt.Errorf("not found excel format. row_line: %d", line)
+}
+
+// GetExcelFormatByRowType finds specific excel format by row type
+func (c *Config) GetExcelFormatByRowType(rowType ExcelFormatRowType) (ExcelFormat, error) {
+	for _, excelFormat := range c.ExcelFormats {
+		if excelFormat.RowType == rowType {
+			return excelFormat, nil
+		}
+	}
+	return ExcelFormat{}, fmt.Errorf("not found excel format. row_type: %s", rowType.String())
 }
 
 // LoadConfigFile gets Config
