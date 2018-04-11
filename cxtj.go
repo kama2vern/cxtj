@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"./logger"
+	"github.com/kama2vern/cxtj/logger"
 	"github.com/urfave/cli"
 )
 

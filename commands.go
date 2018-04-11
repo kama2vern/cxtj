@@ -1,8 +1,8 @@
 package main
 
 import (
-	"./config"
-	"./logger"
+	"github.com/kama2vern/cxtj/config"
+	"github.com/kama2vern/cxtj/logger"
 	"github.com/urfave/cli"
 )
 

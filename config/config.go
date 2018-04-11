@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"../logger"
+	"github.com/kama2vern/cxtj/logger"
 
 	"github.com/BurntSushi/toml"
 )

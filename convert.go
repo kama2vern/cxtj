@@ -9,8 +9,8 @@ import (
 
 	"github.com/tealeg/xlsx"
 
-	"./config"
-	"./logger"
+	"github.com/kama2vern/cxtj/config"
+	"github.com/kama2vern/cxtj/logger"
 )
 
 type Converter struct {
